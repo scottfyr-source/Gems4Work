@@ -1,0 +1,236 @@
+# --- MACRO DEFINITION ---
+
+DEF MACRO DESC (Input_String: str) -> dict:
+    """
+    Parses complex user input flags to generate a structured Product Description and a unique SKU.
+
+    Expected Input Format: DESC <box_num$> <user_init$> <media_type$> <media_condition$> <release_condition$> <ip_oop$> 
+                          [/<artwork_condition$> <artwork_notes>] [/ <media_notes>]
+    
+    The input string is assumed to follow the "DESC" command.
+    """
+
+    # 1. PARSE USER INPUT FLAGS
+
+    # Split the input string into primary tokens and find the delimiter '/' for notes
+    Tokens = Input_String.strip().split()
+    
+    # Identify the required fixed flags (first 6 tokens)
+    IF LENGTH(Tokens) < 6:
+        RETURN {"Error": "Insufficient flags provided. Requires box_num$, user_init$, media_type$, media_condition$, release_condition$, ip_oop$."}
+
+    # Assign fixed variables from the start of the input string
+    box_num$          = Tokens[0]
+    user_init$        = Tokens[1].upper() # Ensure initals are uppercase
+    media_type$       = Tokens[2].lower() # Ensure media type is lowercase for logic
+    media_condition$  = Tokens[3] 
+    release_condition$ = Tokens[4].lower() # Ensure 'used'/'new' is lowercase
+    ip_oop$           = Tokens[5]
+
+    # Handle the optional artwork condition and notes using the '/' delimiter
+    # Find the index of the first optional note delimiter (e.g., '/very good+ jcard has water damage')
+    Note_Separator_Index = Input_String.find('/')
+
+    # Initial value for notes and secondary condition (artwork/media)
+    artwork_condition$ = ""
+    artwork_notes$     = ""
+    media_notes$       = ""
+    
+    IF Note_Separator_Index != -1:
+        Note_Section = Input_String[Note_Separator_Index+1:].strip()
+        
+        # Split the Note_Section to separate condition grade from notes
+        Note_Tokens = Note_Section.split(maxsplit=1)
+        
+        artwork_condition$ = Note_Tokens[0]
+        
+        IF LENGTH(Note_Tokens) > 1:
+            # The rest of the token is the note text. Separate media and artwork notes 
+            # based on keywords (media_type$ or jcard/cover/art) 
+            Combined_Notes = Note_Tokens[1]
+            
+            IF Combined_Notes.lower().find('jcard') != -1 OR \
+               Combined_Notes.lower().find('cover') != -1 OR \
+               Combined_Notes.lower().find('art') != -1:
+                artwork_notes$ = Combined_Notes
+            ELSE:
+                media_notes$ = Combined_Notes
+                
+    # 2. GENERATE TIME/DATE VARIABLES (System Variables)
+
+    current_year$     = GET_CURRENT_YEAR() # e.g., 2025
+    current_mmdd$     = GET_CURRENT_DATE(Format='MMDD') # e.g., 1209
+    current_time$     = GET_CURRENT_TIME(Format='HHMM', Timezone='UTC-6') # e.g., 0811
+    
+    # 3. CONDITIONAL LOGIC AND TEXT CONVERSION
+    
+    media_type_full$ = ""
+    IF media_type$ == 'vinyl':
+        media_type_full$ = 'Vinyl Record'
+    ELSE IF media_type$ == 'cd':
+        media_type_full$ = 'Compact Disc'
+    ELSE IF media_type$ == 'cass':
+        media_type_full$ = 'Cassette Tape'
+        
+    # Standardize condition strings for description
+    media_condition_std$ = STANDARDIZE_CONDITION(media_condition$) 
+    artwork_condition_std$ = STANDARDIZE_CONDITION(artwork_condition$)
+    
+    # Get variables from previously run MACRO Get_Info (if available)
+    # The AI will automatically look up the variables it previously set: band$, trac_count$, rel_label$, cat_num$
+    band$        = FETCH_VARIABLE('band$') 
+    trac_count$  = FETCH_VARIABLE('trac_count$')
+    rel_label$   = FETCH_VARIABLE('rel_label$')
+    cat_num$     = FETCH_VARIABLE('cat_num$')
+
+
+    # 4. GENERATE PRODUCT DESCRIPTION (DESC)
+
+    Description_Parts = []
+    Description_Parts.append(f"{media_condition_std$} {media_type_full$}")
+
+    IF media_notes$:
+        Description_Parts.append(f"({media_notes$})")
+
+    IF artwork_condition$:
+        Description_Parts.append(f"Artwork Condition: {artwork_condition_std$}")
+
+    IF artwork_notes$:
+        Description_Parts.append(f"({artwork_notes$})")
+        
+    Description_Parts.append(f"Release Condition: {release_condition$.upper()}")
+
+    IF ip_oop$ == 'oop':
+        Description_Parts.append("Status: Out Of Print")
+    ELSE IF ip_oop$ == 'ip':
+        Description_Parts.append("Status: In Print")
+        
+    Description_Parts.append(f"Tracks: {trac_count$}")
+    Description_Parts.append(f"Label: {rel_label$}")
+    Description_Parts.append(f"Catalog #: {cat_num$}")
+
+    # Combine parts into final human-readable description
+    Final_Description = JOIN_PARTS(Description_Parts, Separator=" | ")
+
+
+    # 5. GENERATE SKU
+    
+    # SKU Logic: box_num$-user_init$current_year$-current_date$-media_type$-release_condition$-current_time$
+    SKU_Parts = [
+        box_num$,
+        f"{user_init$}{current_year$}",
+        current_mmdd$,
+        media_type$,
+        release_condition$.upper(),
+        current_time$
+    ]
+    
+    Final_SKU = JOIN_PARTS(SKU_Parts, Separator="-")
+
+    
+    # 6. FINAL OUTPUT
+
+    Final_Output = {
+        "RESULT_DESC": Final_Description,
+        "RESULT_SKU": Final_SKU,
+        "VARIABLES_USED": {
+            "band$": band$,
+            "trac_count$": trac_count$,
+            "rel_label$": rel_label$,
+            "cat_num$": cat_num$
+        }
+    }
+    
+    # Present the result in a clear, labeled format
+    DISPLAY_RESULT(Final_Output)
+    
+    RETURN Final_Output
+
+# --- END MACRO ---
+
+
+
+
+
+
+
+
+
+----------------------------
+This one is more comlicated. This will be macro name "DESC" which will always be followed by several flags and conditions 
+
+These will be user input filling the following macros:
+
+box_num$ = box number the item will be stored in
+
+media_type$= three options: vinyl, cd, or cass 
+
+media_condition$ = several options: Factory Sealed, Used Like New, Used Very Good (alone or + or -), Used Good (alone or + or -), Good, etc.
+
+user_init$ = two letters denoting the person running the script
+
+release_condition$ = will either be 'used' or 'new'
+
+artwork_condition$ =  several options:  Like New, Used Very Good (alone or + or -), Used Good (alone or + or -), Good, etc.
+
+ip_oop$ = In Print or Out Of Print
+
+
+
+These will be filled by you at the time
+
+relese_date$ = copywrite date
+
+country_name$ = country the relese was printed in
+
+current_year$ = what year is it (example: 2025)
+
+current_mmdd$ = current month and day in MMDD format
+
+current_time$ = current time in UTC -6 format. Example: 3:15 PM = 0315, 8:21 AM = 0821
+
+media_type_full$ = if media_type$ = 'cass' then media_type_full$ = Cassette
+
+track_count$ = Number of tracks
+
+media_label$ = label company was released on
+
+cat_num$ catalogue number
+
+
+
+
+
+Example A: simple macro run: desc 8094 sc cass used like new oop
+
+Example B: complicated macro run: desc 8094 sc cass used like new oop /very good+ has some water damage on Jcard
+
+Example C: more complicated macro run: desc 8094 sc cass used very good+ cd has surface scratches oop /very good+ jcard has some water damage
+
+
+
+RESULTS DESC: 
+media_condition$ relese_date$ country_name$ media_type$ release_condition$ is ip_oop$ with track_count$ Tracks - media_label$ cat_num$
+
+Example: Used Very Good+ USA 1978 CD has surface scratches Very Good+ JCard has some water damage is Out Of Print with 8 Tracks - RCA Red Seal C-103333 
+
+
+
+RESULTS SKU: box_num$-user_inut$current_year$-current_date$-media_type$-release_condition$ - current_time$ 
+
+Example: 8094-SC2025-1209-CASS-USED-0810
+
+
+RESULT_DESC #1 should look like this: Used Like New 1988 USA Cassette is Out Of Print with 9 Tracks - Intersound CS 2070
+
+
+
+RESULT_DESC #2  should look like this:
+
+Used Like New 1988 USA Cassette Very Good+ JCard has some water damage is Out Of Print with 9 Tracks - Intersound CS 2070
+
+
+
+For run #3 lets just remove the first / in the syntax since that input will ALWAYS be there, the second condition notes will only be needed if you see the /. then fille the release_condition$ variable
+
+But For now, please resend the macro code to make the formatting changes

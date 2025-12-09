@@ -1,0 +1,82 @@
+# --- MACRO DEFINITION ---
+
+DEF MACRO Get_Info (Raw_Input_Text: str) -> dict:
+    """
+    Parses raw text data from Vinyl/CD/Cassette artwork/labels.
+    Organizes, formats, and labels data into structured subgroups, 
+    and assigns key data to specific variables for SKU/Description generation.
+    """
+
+    # 1. INITIAL PROCESSING AND CLEANUP
+    
+    # Check for presence of input text
+    IF NOT Raw_Input_Text:
+        RETURN {"Error": "Please provide the raw transcribed text data to process."}
+
+    # Remove all parentheses from the entire text string (e.g., "(4:23)" becomes "4:23")
+    Clean_Text = Raw_Input_Text.replace('(', '').replace(')', '')
+
+    # 2. DATA IDENTIFICATION AND GROUPING (AI Logic)
+
+    # Variables hold the raw identified data before formatting
+    Identified_Data = IDENTIFY_ALL_DATA(Clean_Text)
+    
+    # Group A: Core Release Details (Band, Album, etc.)
+    Core_Release_Details = Identified_Data.get("Core_Details", [])
+    # Group B: Track Listing
+    Track_List_Raw = Identified_Data.get("Track_Listing_Raw", [])
+    # Group C: Production/Technical Credits
+    Production_Credits = Identified_Data.get("Production_Credits", [])
+    # Group D: Remaining Text (General Notes, Copyright, etc.)
+    Miscellaneous_Details = Identified_Data.get("Miscellaneous", [])
+    
+    # 3. VARIABLE ASSIGNMENT AND CLEANING
+
+    band$ = EXTRACT_VALUE(Core_Release_Details, 'band name', default='UNKNOWN_BAND')
+    album_name$ = EXTRACT_VALUE(Core_Release_Details, 'album name', default='UNKNOWN_ALBUM')
+    year$ = EXTRACT_VALUE(Core_Release_Details, 'release date', default='YYYY')
+    
+    # Extract, then remove commas from the label text
+    rel_label$ = EXTRACT_VALUE(Core_Release_Details, 'label', default='UNKNOWN_LABEL').replace(',', '').strip()
+    
+    cat_num$ = EXTRACT_VALUE(Core_Release_Details, 'catalogue number', default='CAT_NUM_MISSING')
+    
+    # Calculate track count from the identified track list length
+    trac_count$ = LENGTH(Track_List_Raw)
+    
+    # 4. FORMATTING RULES (Apply Title Case and Labeling)
+
+    # Format and label the data groups for the final display list
+    Formatted_Core_Details = FORMAT_GROUP(Core_Release_Details, APPLY_TITLE_CASE=True)
+    Formatted_Track_List = FORMAT_GROUP(Track_List_Raw, APPLY_TITLE_CASE=True)
+    Formatted_Production_Credits = FORMAT_GROUP(Production_Credits, APPLY_TITLE_CASE=True)
+    Formatted_Miscellaneous = FORMAT_GROUP(Miscellaneous_Details, APPLY_TITLE_CASE=True)
+    
+
+    # 5. FINAL OUTPUT GENERATION (Human Readable and Variables)
+    
+    Final_Output = {
+        "VARIABLES_ASSIGNED": {
+            "band$": band$,
+            "album_name$": album_name$,
+            "year$": year$,
+            "trac_count$": trac_count$,
+            "rel_label$": rel_label$,
+            "cat_num$": cat_num$
+        },
+        "PARSED_DATA_LIST": {
+            "Core_Details": Formatted_Core_Details,
+            "Track_Listing": Formatted_Track_List,
+            "Production_Credits": Formatted_Production_Credits,
+            "Miscellaneous": Formatted_Miscellaneous
+        }
+    }
+    
+    # Present the result in a nicely formatted list display (human readable)
+    DISPLAY_RESULT(Final_Output) 
+    
+    RETURN Final_Output
+
+# --- END MACRO ---
+
+

@@ -1,0 +1,181 @@
+This is a macro: 
+
+
+
+Macro Name: "Get Info"
+
+
+
+(Start Macro "get info")
+
+
+
+Macro Steps: 
+
+
+
+1] When I tell you "Get info" and then upload an image what you should do is: 
+
+	a] If no image is uploaded with macro command then use last uploaded image in the chat.
+
+	b] Give me all the text and song names in the image
+
+
+
+2] separate the band name, album name, release date, label, catalogue number into it's own sub group. 
+
+	a] capitalize the first letter of every word.
+
+
+
+3] separate the song titles into it's own sub group. 
+
+	a] capitalize the first letter of every word.
+
+	
+
+4] separate the rest into it's own sub group. 
+
+	a] capitalize the first letter of every word.
+
+
+
+5] include all labels for the data. Examples: Label: CBS, Band Name: The Doors
+
+
+
+(End macro "get info")
+
+
+
+--------------------------------
+
+
+
+This is a new macro: 
+
+
+
+Macro Name: "Get Desc"
+
+
+
+1] This is a macro designed to take additional input from the user.
+
+2] User input example: get info 8094 CD USED Used Like New
+
+
+
+
+
+(Start Macro "get desc")
+
+
+
+Macro Steps: 
+
+
+
+1] After the macro command "get desc" the follwing user input could be sent.
+
+
+
+	a] User Input Example: "get desc 8094 CD used used like new", "get info 5264 cass Very Good+ with some scratches" 
+
+	
+
+Macro Work:
+
+
+
+When I tell you "get desc" do the following:	
+
+
+
+1] Check CD/Cassette image 
+
+
+
+	a] If no image is uploaded with macro command then use last uploaded image in the chat.
+
+
+
+
+
+2] On a separate sub section labeled: DESCRIPTION:
+
+
+
+	1] Always capitalize the first letter in the words "Factory Sealed", "Like New", "Very Good", "Very Good+", "Good+", "Good"
+
+	2] Include any +'s or -'s that may or may not be there as listed	
+
+
+
+    Syntax: 
+
+		{media_desc} {year} USA {format} {media_syntax} is Out Of Print with {trac_count} Tracks - {label} {cat_num}
+
+
+
+    Where: 		
+
+		{desc_quality} = The next word after {format} variable input and capitolize the first letter in the word Examples: Used, New
+
+		{media_desc} = the next two words of text entered by the user after {used_new}. Examples: Like New, Very Good+		
+
+		{media_syntax} = all the text that follow the data input after the {media_desc} variable input
+
+		{year} = the year the item was released
+
+        {trac_count) = the number of tracks in numerals
+
+        {label} = the label the release is on and remove and comma punctuation
+
+        {cat_num} = The catalogue number
+
+	
+
+	1] If the {media_desc} data is "like new" or "factory sealed" then the {media_syntax} will be empty of data do not add variable name in this case.
+
+	
+
+	2] Example: Used Like New 1985 USA Cassette is Out Of Print with 14 Tracks - Sundown Records SUN-100
+
+
+
+3] On a separate subsection labeled: SKU
+
+
+
+    Syntax:
+
+        {box_num}-SC2025-{mmdd}-{format_sku}-{used_new}-{hhmm}
+
+
+
+    Where:		
+
+		{box_num} = The first set of number entered by the user after the macro command "get desc". Examples: get desc 8094, get desc 0324
+
+		{format_sku}= The next text block after {box_num} variable input and in all capital letters. Examples: get desc 8094 CD, get desc 8094 CASS, get desc 8094 VINYL
+
+		{used_new} = The next word after {desc_quality} variable input and capitolize the entire word. Examples: get desc 8094 CD USED, 8094 CASS New 
+
+		{mmdd} = to days date in the following format example for November 26th: 1126
+
+		{hhmm} = the current time in the following format example for 10:03 AM: 1003		
+
+
+
+If any information is not present in an image then fill the space with the variable name 
+
+	a] except if "like new" or "factory sealed" then the {media_syntax} will be empty of data do not add the variable name  in this case.
+
+
+
+(End macro "get info")
+
+
+
+Only provide the information populated in the macros do not add greetings or small talk or follow up questions

@@ -1,0 +1,24 @@
+This is a macro: 
+
+Macro Name: "Get Info"
+
+(Start Macro "get info")
+
+Macro Steps: 
+
+1] When I tell you "Get info" and then upload an image what you should do is: 
+	a] If no image is uploaded with macro command then use last uploaded image in the chat.
+	b] Give me all the text and song names in the image
+
+2] separate the band name, album name, release date, label, catalogue number into it's own sub group. 
+	a] capitalize the first letter of every word.
+
+3] separate the song titles into it's own sub group. 
+	a] capitalize the first letter of every word.
+	
+4] separate the rest into it's own sub group. 
+	a] capitalize the first letter of every word.
+
+5] include all labels for the data. Examples: Label: CBS, Band Name: The Doors
+
+(End macro "get info")

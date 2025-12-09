@@ -1,0 +1,53 @@
+What we can do in Canvas
+
+Canvas is a collaborative editor where we can work side-by-side. Instead of just talking in the chat, we can build, edit, and preview actual files here.
+
+1. Coding & Software Development
+
+I can write, debug, and explain code in many languages. You can edit the code directly, and I can update it based on your feedback.
+
+Web Apps: React, Angular, and HTML/CSS/JS (Single-file applications).
+
+Scripts: Python, JavaScript, C++, Java, and more.
+
+Data Science: Python scripts for analysis or visualization.
+
+2. Interactive Previews
+
+For web-based code, you can click the "Preview" button to run the code instantly.
+
+Games: Snake, Pong, Chess, or custom logic games.
+
+Tools: Calculators, To-Do lists, Timers, or Budget trackers.
+
+Visualizations: Interactive charts and dashboards.
+
+3. Writing & Content Creation
+
+Canvas is perfect for long-form writing because it keeps formatting clean and allows for easy revisions.
+
+Documents: Blog posts, essays, stories, and reports.
+
+Technical Writing: README files, documentation, and tutorials.
+
+Resumes: I can generate professional resumes using LaTeX (which renders as a PDF).
+
+4. Formatting & Layout
+
+Markdown: I can format text with headers, lists, and tables.
+
+LaTeX: I can render complex mathematical formulas and scientific notation (e.g., 
+
+$$E=mc^2$$
+
+).
+
+How to use it
+
+Ask me to create something (e.g., "Write a Python script to scrape a website" or "Make a React app for a breathing exercise").
+
+I'll generate the file in this window.
+
+You can edit it directly if you want to make small tweaks.
+
+Ask for changes in the chat (e.g., "Make the background blue" or "Fix the bug in line 10"), and I'll update the file for you.

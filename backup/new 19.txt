@@ -1,0 +1,271 @@
+def get_info(input_text: str) -> dict:
+    """
+    Parses raw text data from Vinyl/CD/Cassette artwork/labels.
+    Organizes, formats, and labels data into structured subgroups,
+    and assigns key data to specific variables for SKU/Description generation.
+    
+    This function simulates the logic of the custom MACRO definition 
+    by replacing the proprietary functions with standard Python equivalents
+    and inferred logic.
+    """
+    import re
+    
+    # 1. INITIAL PROCESSING AND CLEANUP
+    if not input_text:
+        return {"Error": "Please provide the raw transcribed text data immediately after 'get info'."}
+
+    # Remove all parentheses from the entire text string
+    clean_text = input_text.replace('(', '').replace(')', '')
+
+    # --- SIMULATED CUSTOM FUNCTIONS ---
+
+    def _identify_all_data(text: str) -> dict:
+        """A simple, simulated IDENTIFY_ALL_DATA. In a real system, 
+        this would use NLP/regex to classify text sections."""
+        
+        # Simple placeholder for grouping based on typical record label patterns
+        lines = [line.strip() for line in text.split('\n') if line.strip()]
+        
+        core_details = []
+        track_listing = []
+        production_credits = []
+        miscellaneous = []
+        
+        # Simple logic: first 4-5 lines are core/production, followed by tracks, then misc.
+        # For this simulation, we'll extract known pattern keys and put the rest in track/misc.
+        
+        # Look for Band, Album, Year, Label, Catalogue Number, and Primary Copyright
+        band_match = re.search(r'([A-Z][a-z]+(?: [A-Z][a-z]+)*) - (Album|LP|EP|Compilation)', text, re.IGNORECASE)
+        album_match = re.search(r'\"(.+?)\"', text)
+        year_match = re.search(r'(19\d{2}|20\d{2})', text)
+        label_match = re.search(r'Label: ([A-Za-z\s&]+)', text)
+        cat_num_match = re.search(r'CAT\s?\.?\s?#?:\s*([A-Z0-9\-\/]+)', text, re.IGNORECASE)
+        p_year_match = re.search(r'P\s*([12]\d{3})', text)
+        
+        if band_match:
+            core_details.append(("band name", band_match.group(1)))
+            
+        if album_match:
+            core_details.append(("album name", album_match.group(1)))
+
+        # Prioritize the earliest year as release date if multiple
+        release_year = year_match.group(1) if year_match else 'YYYY'
+        core_details.append(("release date", release_year))
+
+        if label_match:
+            core_details.append(("label", label_match.group(1)))
+        
+        if cat_num_match:
+            core_details.append(("catalogue number", cat_num_match.group(1)))
+            
+        primary_copyright_year = p_year_match.group(1) if p_year_match else release_year
+        core_details.append(("primary copyright date", primary_copyright_year))
+
+        # Placeholder for track listing - simple split by line
+        # This is a major simplification. Real logic would be complex.
+        start_track = False
+        for line in lines:
+            # Simple check for track number start
+            if re.match(r'^\s*([A-Za-z]?\d+\.?)\s+', line.strip()) or re.search(r'(Side\s+[A-B])', line):
+                start_track = True
+                track_listing.append(line)
+            elif not start_track and not any(line in c[1] for c in core_details):
+                production_credits.append(line)
+            elif start_track:
+                track_listing.append(line)
+            else:
+                miscellaneous.append(line)
+
+        # Fallback to group all remaining lines if no clear structure
+        if not track_listing and not production_credits:
+             miscellaneous = lines[len(core_details):]
+
+
+        return {
+            "Core_Details": core_details,
+            "Track_Listing_Raw": track_listing,
+            "Production_Credits": production_credits,
+            "Miscellaneous": miscellaneous
+        }
+
+    def _extract_value(data_list: list, key: str, default: str) -> str:
+        """Simulates EXTRACT_VALUE to find a key in the identified data list."""
+        for k, v in data_list:
+            if k.lower() == key.lower():
+                return v
+        return default
+
+    def _length(data_list: list) -> str:
+        """Simulates LENGTH and returns as a string."""
+        return str(len(data_list))
+
+    def _format_group(data_list: list, apply_title_case: bool) -> list:
+        """Simulates FORMAT_GROUP, applying Title Case and structuring."""
+        formatted = []
+        for item in data_list:
+            if isinstance(item, tuple):
+                # Core_Details are tuples (key, value)
+                key, value = item
+                if apply_title_case:
+                    value = value.title()
+                formatted.append(f"{key.replace('_', ' ').title()}: {value}")
+            elif isinstance(item, str):
+                # Other groups are raw strings
+                if apply_title_case:
+                    item = item.title()
+                formatted.append(item)
+        return formatted
+
+    def _display_result(output: dict):
+        """Simulates DISPLAY_RESULT by printing a human-readable summary."""
+        print("\n--- ✅ PARSING COMPLETE ---")
+        print("\n## 💿 ASSIGNED VARIABLES")
+        for k, v in output["VARIABLES_ASSIGNED"].items():
+            print(f"* **{k.replace('$', '')}**: {v}")
+        
+        print("\n" + "-"*30)
+
+        for group_name, items in output["PARSED_DATA_LIST"].items():
+            print(f"\n## 🗂️ {group_name.replace('_', ' ').title()}")
+            if items:
+                for item in items:
+                    print(f"* {item}")
+            else:
+                print("* No data identified for this group.")
+        print("\n" + "-"*30)
+        
+    # --- END SIMULATED CUSTOM FUNCTIONS ---
+
+    # 2. DATA IDENTIFICATION AND GROUPING
+    identified_data = _identify_all_data(clean_text)
+    
+    core_release_details = identified_data.get("Core_Details", [])
+    track_list_raw = identified_data.get("Track_Listing_Raw", [])
+    production_credits = identified_data.get("Production_Credits", [])
+    miscellaneous_details = identified_data.get("Miscellaneous", [])
+
+    # 3. VARIABLE ASSIGNMENT AND CLEANING
+    band = _extract_value(core_release_details, 'band name', default='UNKNOWN_BAND')
+    album_name = _extract_value(core_release_details, 'album name', default='UNKNOWN_ALBUM')
+    year = _extract_value(core_release_details, 'release date', default='YYYY')
+    # NEW: Variable for the earliest copyright year (P year)
+    year_p = _extract_value(core_release_details, 'primary copyright date', default='1988') 
+    
+    # Extract, then remove commas from the label text
+    rel_label = _extract_value(core_release_details, 'label', default='UNKNOWN_LABEL').replace(',', '').strip()
+    
+    cat_num = _extract_value(core_release_details, 'catalogue number', default='CAT_NUM_MISSING')
+    
+    # Calculate track count from the identified track list length
+    trac_count = _length(track_list_raw)
+
+    # 4. FORMATTING RULES (Apply Title Case and Labeling)
+    formatted_core_details = _format_group(core_release_details, apply_title_case=True)
+    formatted_track_list = _format_group(track_list_raw, apply_title_case=True)
+    formatted_production_credits = _format_group(production_credits, apply_title_case=True)
+    formatted_miscellaneous = _format_group(miscellaneous_details, apply_title_case=True)
+    
+    # 5. FINAL OUTPUT GENERATION (Human Readable and Variables)
+    final_output = {
+        "VARIABLES_ASSIGNED": {
+            "band$": band,
+            "album_name$": album_name,
+            "year$": year,
+            "year_p$": year_p, # Primary Copyright Year
+            "trac_count$": trac_count,
+            "rel_label$": rel_label,
+            "cat_num$": cat_num
+        },
+        "PARSED_DATA_LIST": {
+            "Core_Details": formatted_core_details,
+            "Track_Listing": formatted_track_list,
+            "Production_Credits": formatted_production_credits,
+            "Miscellaneous": formatted_miscellaneous
+        }
+    }
+    
+    _display_result(final_output) 
+    
+    return final_output
+	
+	
+	def generate_desc_and_sku(parsed_data: dict) -> dict:
+    """
+    Generates a standardized SKU and a detailed product description 
+    using the variables assigned by the Get_Info function.
+    
+    This function simulates a 'DESC MACRO' for listing generation.
+    """
+    
+    # 1. EXTRACT REQUIRED VARIABLES
+    variables = parsed_data.get("VARIABLES_ASSIGNED", {})
+    
+    band = variables.get("band$", "Unknown Artist").replace(' ', '_').upper()
+    album_name = variables.get("album_name$", "Unknown Album").replace(' ', '_').upper()
+    year = variables.get("year$", "YYYY")
+    year_p = variables.get("year_p$", year)
+    rel_label = variables.get("rel_label$", "UNKNOWNLABEL").replace(' ', '').upper()
+    cat_num = variables.get("cat_num$", "CATNUMMISSING")
+    trac_count = variables.get("trac_count$", "N/A")
+    
+    # 2. SKU GENERATION (Example Format)
+    # Format: BAND_ALBUM_LABEL_CAT#_YEAR
+    # Example: BEATLES_SGTPEPPER_PARLOPHONE_PMC7027_1967
+    
+    sku = f"{band}_{rel_label}_{cat_num}_{year}"
+
+    # Clean up the SKU for only alphanumeric/underscores
+    sku = re.sub(r'[^A-Z0-9_]', '', sku) 
+    
+    # 3. DESCRIPTION GENERATION
+    
+    # Get formatted lists for descriptive text
+    core_details = parsed_data.get("PARSED_DATA_LIST", {}).get("Core_Details", [])
+    track_listing = parsed_data.get("PARSED_DATA_LIST", {}).get("Track_Listing", [])
+    production_credits = parsed_data.get("PARSED_DATA_LIST", {}).get("Production_Credits", [])
+
+    # Format core description header
+    desc_header = (
+        f"**{variables.get('band$', 'Unknown Artist').title()}** - "
+        f"***{variables.get('album_name$', 'Unknown Album').title()}*** "
+        f"({year_p} Original Copyright, {year} Release)\n"
+        f"Label: {variables.get('rel_label$', 'Unknown Label').title()} | Catalogue #: {cat_num}\n"
+    )
+    
+    # Format Track List Section
+    track_list_section = "\n## 🎶 Track Listing\n"
+    if track_listing:
+        # Use simple newline separated list
+        track_list_section += "\n".join([f"* {t}" for t in track_listing])
+        track_list_section += f"\n\nTotal Tracks: **{trac_count}**"
+    else:
+        track_list_section += "* Track list is currently unavailable from the raw text data."
+
+    # Format Production/Notes Section
+    production_section = "\n\n## 🔧 Production & Notes\n"
+    notes = production_credits + [d for d in core_details if 'Label' not in d and 'Catalogue' not in d]
+    
+    if notes:
+        production_section += "\n".join([f"* {n}" for n in notes])
+    else:
+        production_section += "* No specific production or technical credits were clearly identified."
+    
+    full_description = desc_header + track_list_section + production_section
+    
+    # 4. FINAL OUTPUT
+    final_output = {
+        "GENERATED_SKU": sku,
+        "PRODUCT_DESCRIPTION": full_description
+    }
+
+    print("\n--- ✅ DESCRIPTION & SKU GENERATION COMPLETE ---")
+    print(f"\n## 🏷️ GENERATED SKU: **{sku}**")
+    print("\n" + "="*50)
+    print("\n## 📝 PRODUCT DESCRIPTION (Markdown Ready)")
+    print(full_description)
+    print("\n" + "="*50)
+    
+    return final_output
+	
+	
+	

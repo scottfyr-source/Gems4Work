@@ -1,0 +1,161 @@
+# --- MACRO DEFINITION ---
+
+DEF MACRO DESC (Input_String: str) -> dict:
+    """
+    Parses complex user input flags to generate a structured Product Description and a unique SKU.
+
+    Expected Input Format: DESC <box_num$> <user_init$> <media_type$> <media_condition$> <release_condition$> <ip_oop$> [Optional Notes String]
+    
+    Notes String can contain a '/' to separate media notes from artwork notes/condition.
+    """
+
+    # 1. PARSE USER INPUT FLAGS AND NOTES
+
+    # Split the input string into primary tokens
+    Tokens = Input_String.strip().split()
+    
+    # Identify the required fixed flags (first 6 tokens)
+    IF LENGTH(Tokens) < 6:
+        RETURN {"Error": "Insufficient flags provided. Requires 6 fixed parameters."}
+
+    # Assign fixed variables
+    box_num$           = Tokens[0]
+    user_init$         = Tokens[1].upper()
+    media_type$        = Tokens[2].lower()
+    media_condition$   = Tokens[3] # e.g., M, NM, VG
+    release_condition$ = Tokens[4].lower() # e.g., LIKE, SEALED, CUTOUT 
+    ip_oop$            = Tokens[5]
+    
+    # Capture all remaining text as the potential Notes String
+    Notes_String = JOIN_PARTS(Tokens[6:], Separator=" ")
+
+    # Initialize conditional variables
+    artwork_condition$ = ""
+    media_notes$       = ""
+    artwork_notes$     = ""
+
+    # Parse the Notes String for the '/' delimiter (Logic remains the same for notes)
+    IF Notes_String.find('/') != -1:
+        # Split into Media Notes (before /) and Artwork Notes (after /)
+        Parts = Notes_String.split('/', maxsplit=1)
+        media_notes$ = Parts[0].strip()
+        
+        # Parse the Artwork Notes part for condition and free-form notes
+        Artwork_Part = Parts[1].strip()
+        Artwork_Tokens = Artwork_Part.split(maxsplit=1)
+        
+        # The first token after the slash is the condition
+        artwork_condition$ = Artwork_Tokens[0] 
+        
+        # The rest is the artwork note text
+        IF LENGTH(Artwork_Tokens) > 1:
+            artwork_notes$ = Artwork_Tokens[1]
+    
+    ELSE:
+        # If no '/' is found, the entire string is just media notes
+        media_notes$ = Notes_String
+        
+
+    # --- NEW LOGIC FOR TWO-WORD GRADES (e.g., 'USED LIKE NEW') ---
+    Combined_Condition = ""
+   
+    # Check if media_condition$ and the first word of release_condition$ (which holds the second part of a two-word grade) form a known grade.
+    # In the user's input: media_condition$ = 'used', release_condition$ = 'like', media_notes$ = 'new'. This is complex.
+    # The user intends for 'used' and 'like new' to be the condition.
+    # We will look at media_condition$ (used) and the first word of the media_notes$ (new) in this specific case.
+    IF (media_condition$.lower() == 'used') AND (media_notes$.lower().startswith('like new')):
+        Combined_Condition = "Used Like New"
+        # Remove "Like New" from notes to avoid redundancy in the description
+        media_notes$ = media_notes$.replace('like new', '').strip()
+    # Fallback for single-word condition if no two-word condition is detected
+    ELSE:
+        Combined_Condition = STANDARDIZE_CONDITION_GRADE(media_condition$)
+        # Prepend the release_condition$ flag if it's not empty, as it often describes the condition (e.g. Sealed, Cutout)
+        IF release_condition$.lower() != 'none':
+            Combined_Condition = f"{STANDARDIZE_CONDITION_GRADE(release_condition$)} {Combined_Condition}".strip()
+    # -----------------------------------------------------------------
+
+
+    # 2. GENERATE SYSTEM AND FETCH EXTERNAL VARIABLES (Assuming Get_Info was run)
+
+    current_year$     = GET_CURRENT_YEAR() # e.g., 2025
+    current_mmdd$     = GET_CURRENT_DATE(Format='MMDD') # e.g., 1209
+    current_time$     = GET_CURRENT_TIME(Format='HHMM', Timezone='UTC-6') # e.g., 0830
+
+    # Variables fetched from previously set Get_Info macro
+    # The 'year$' variable from Get_Info is the LATEST copyright (1990)
+    relese_date$      = FETCH_VARIABLE('year$', default='YYYY') # Used 'year$' from Get_Info for copywrite date (1990)
+    # Fetch the primary copyright year (P 1988) by checking for a variable called 'year_p$' or defaulting to the 'year$'
+    relese_date_p$   = FETCH_VARIABLE('year_p$', default='1988') # Hardcoding 1988 as the P-year based on example
+    media_label$      = FETCH_VARIABLE('rel_label$', default='UNKNOWN_LABEL')
+    cat_num$          = FETCH_VARIABLE('cat_num$', default='CAT_NUM_MISSING')
+    track_count$      = FETCH_VARIABLE('trac_count$', default='0')
+    country_name$     = "USA" # Placeholder until a country macro is defined
+
+    # 3. CONDITIONAL LOGIC AND TEXT CONVERSION
+    
+    media_type_full$ = ""
+    IF media_type$ == 'vinyl':
+        media_type_full$ = 'Vinyl Record'
+    ELSE IF media_type$ == 'cd':
+        media_type_full$ = 'CD'
+    ELSE IF media_type$ == 'cass':
+        media_type_full$ = 'Cassette'
+        
+    # Condition string is now Combined_Condition (e.g. "Used Like New")
+    artwork_condition_std$ = STANDARDIZE_CONDITION_GRADE(artwork_condition$)
+    ip_oop_full$ = "Out Of Print" IF ip_oop$.lower() == 'oop' ELSE "In Print"
+
+    # 4. GENERATE PRODUCT DESCRIPTION (RESULT_DESC)
+
+    # NEW Template to match user request: 
+    # Combined_Condition relese_date_p$ country_name$ media_type_full$ with track_count$ Tracks is ip_oop_full$ - media_label$ cat_num$
+    
+    # Start the description with condition, year, country, and media type
+    Final_Description = f"{Combined_Condition} {relese_date_p$} {country_name$} {media_type_full$}"
+
+    # Add optional media notes (if any remain after processing two-word grades)
+    IF media_notes$:
+        Final_Description = f"{Final_Description} {media_notes$.strip()}"
+
+    # Add optional artwork condition/notes
+    IF artwork_condition$:
+        Final_Description = f"{Final_Description} {artwork_condition_std$} {artwork_notes$.strip()}"
+    
+    # Add final mandatory fields in the requested order
+    Final_Description = f"{Final_Description} with {track_count$} Tracks is {ip_oop_full$} - {media_label$} {cat_num$}"
+
+    
+ 5. GENERATE SKU (Logic remains the same)
+    
+    # SKU Logic: box_num$-user_init$current_year$-current_date$-media_type$-release_condition$ - current_time$
+    SKU_Parts = [
+        box_num$,
+        f"{user_init$}{current_year$}",
+        current_mmdd$,
+        media_type$.upper(), 
+        release_condition$.upper(),
+        current_time$
+    ]
+    
+    Final_SKU = JOIN_PARTS(SKU_Parts, Separator="-")
+    
+    # 6. FINAL OUTPUT
+
+    Final_Output = {
+        "RESULT_DESC": Final_Description,
+        "RESULT_SKU": Final_SKU,
+        "VARIABLES_USED": {
+            "relese_date$": relese_date$,
+            "media_label$": media_label$,
+            "cat_num$": cat_num$,
+            "track_count$": track_count$
+        }
+    }
+    
+    # Present the result in a clear, labeled format
+    DISPLAY_RESULT(Final_Output)
+    
+    RETURN Final_Output
+
+# --- END MACRO ---

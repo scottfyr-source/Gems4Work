@@ -1,0 +1,49 @@
+This is a new macro: 
+Macro Name: "Get Tape"
+
+(Start Macro "get tape")
+Macro Steps: 
+
+1] When I tell you "get tape" and then upload an image what you should do is: 
+
+	a] If no image is uploaded with macro command then use last uploaded image in the chat.
+
+	b] Give me all the text except song title
+
+
+
+2] Example:
+Color: The tape  shell is a solid white or off-white.
+Texture: Checkbox texture around entire shell
+Labeling: All text is printed in black ink directly on the shell.
+Side Indicator: The prominent letter "A" in a large, bold font is on the left side, indicating the tape side.
+Copyright: The copyright symbol and text "℗ ESSEX ENTERTAINMENT" is printed near the top center.
+Program Title: The album title "SOUNDS OF PEACE" is printed near the bottom, centered in a bold font.
+Artist: The artist name "THE ROYAL PHILHARMONIC ORCHESTRA" is printed below the title.
+Spools/Window: It features a clear plastic window in the center to view the magnetic tape and the spools. A meter is visible below the window, marked from 0 to 100, with 50 centered.
+Hubs: The two hubs/spools are circular and white/clear.
+Catalogue Number: The number "9612" is visible on the right side of the tape shell.
+
+
+(End Macro "get tape")
+
+{color}
+{testure}
+{labeling}
+{timing_window}
+{copywrite}
+{cat_num}
+
+
+
+
+Color: The tape  shell is a solid white or off-white.
+Texture: Checkbox texture around entire shell
+Labeling: All text is printed in black ink directly on the shell.
+Side Indicator: The prominent letter "A" in a large, bold font is on the left side, indicating the tape side.
+Copyright: The copyright symbol and text "℗ ESSEX ENTERTAINMENT" is printed near the top center.
+Program Title: The album title "SOUNDS OF PEACE" is printed near the bottom, centered in a bold font.
+Artist: The artist name "THE ROYAL PHILHARMONIC ORCHESTRA" is printed below the title.
+Spools/Window: It features a clear plastic window in the center to view the magnetic tape and the spools. A meter is visible below the window, marked from 0 to 100, with 50 centered.
+Hubs: The two hubs/spools are circular and white/clear.
+Catalogue Number: The number "9612" is visible on the right side of the tape shell.
